@@ -1,0 +1,2 @@
+ALTER TABLE "transactions" ADD COLUMN "due_date" date;--> statement-breakpoint
+CREATE INDEX "transactions_business_due_idx" ON "transactions" USING btree ("business_id","due_date") WHERE "transactions"."paid_at" IS NULL;

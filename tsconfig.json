@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,18 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@workspace/domain": [
+        "./src/core/domain/index.ts"
+      ],
+      "@workspace/db": [
+        "./src/core/db/index.ts"
+      ],
+      "@workspace/api-contract": [
+        "./src/core/contract/index.ts"
+      ]
     }
   },
   "include": [
@@ -30,5 +45,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "src/lib/*.test.ts",
+    "src/components/**/*.test.ts",
+    "src/views/**/*.test.ts",
+    "src/api/**/*.test.ts"
+  ]
 }

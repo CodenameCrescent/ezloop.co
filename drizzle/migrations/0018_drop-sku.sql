@@ -1,0 +1,1 @@
+ALTER TABLE "revenue_items" DROP COLUMN "sku";

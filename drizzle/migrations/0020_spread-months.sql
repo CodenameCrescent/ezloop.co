@@ -1,0 +1,1 @@
+ALTER TABLE "transaction_lines" ADD COLUMN "spread_months" integer;

@@ -1,0 +1,922 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+/* Inter, and only Inter. Self-hosted through fontsource — no CDN, so the
+   deployed Content-Security-Policy stays happy. */
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/inter/wght-italic.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROFIT LOOP — the design system. One file, one source of truth.
+
+   1. SURFACES SEPARATE BY VALUE, OR BY HAIRLINE IN A DENSE GRID.
+      A single-emphasis card (the dashboard hero, a dialog) carries no border
+      and no shadow — it reads as raised because it is a different value from
+      the page. A dense grid panel (`Surface variant="bordered"`) uses a 1px
+      hairline between cells instead, because a strip of four figures is one
+      object with divisions, not four floating cards.
+      In DARK, value alone is too weak at the top of the ramp, so even a
+      borderless card carries a hairline and a whisper of shadow — both
+      tokenised (`--pl-surface-line`, `--pl-surface-shadow`) and both resolving
+      to nothing in light, so the recipe stays single. Only true overlays —
+      dialogs, dropdowns, toasts — get a real shadow: they genuinely float.
+   2. COLOUR MEANS MONEY. Green is money gained, red is money lost, grey is
+      neutral, ORANGE IS THE BRAND MARK. Every other hue is allowed on a TAG
+      and nowhere else.
+   3. EVERY HUE HAS TWO VALUES. A -solid for fills, bars and chart marks
+      (needs 3:1) and a plain one for text (needs 4.5:1). Reaching for the
+      solid where text belongs is the bug this split exists to prevent.
+   4. THREE RADII: 10px, 16px, and a pill. Nothing else.
+   5. EVERY TOKEN HAS A DARK COUNTERPART holding the same contrast contract
+      and the same meaning. Light lives on :root, dark on .dark, and nothing
+      in a component ever names a hex.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  --pl-bg: #f6f7f9;         /* the page everything floats on */
+  --pl-surface: #ffffff;    /* a raised card */
+  --pl-recessed: #f0f2f6;   /* table headers, wells, inset panels */
+  --pl-hairline: #e2e5ea;   /* table row separators and input outlines ONLY */
+
+  /* Elevation ramp. Nothing on the page plane in light mode — these are the
+     hooks dark mode uses, and they must stay valid box-shadow values here. */
+  --pl-surface-line: transparent;
+  --pl-surface-shadow: 0 0 rgba(0, 0, 0, 0);
+
+  /* The line that DIVIDES a dense grid, as opposed to the one that separates a
+     table row. Same value in light, stronger in dark: a row separator should
+     stay quiet, but a grid division is structure — it is the thing telling you
+     four figures are one strip, and at the dark end of the ramp the row
+     hairline is too faint to carry that. */
+  --pl-grid-line: #e2e5ea;
+
+  /* ── Ink ───────────────────────────────────────────────────────────────── */
+  /* Every ink value clears 4.5:1 on all three surfaces. The recessed panel is
+     the tightest of the three, so it set each number. */
+  --pl-ink: #14171f;        /* primary text        — 17.9 on white */
+  --pl-ink-2: #4d5666;      /* secondary text      —  7.40 / 6.99 / 6.60 */
+  --pl-ink-3: #5d6572;      /* tertiary, captions  —  5.88 / 5.56 / 5.25 */
+
+  /* ── Brand. Orange is the mark, not the wallpaper. ─────────────────────── */
+  --pl-orange: #ff4e28;         /* THE brand mark: logo, favicon, focus ring */
+  --pl-orange-fill: #c6350e;    /* a fill with white text on it (5.36) */
+  --pl-orange-hover: #a82c0b;
+  --pl-orange-text: #c6350e;    /* any orange that is a word (4.78 on recessed) */
+  --pl-orange-tint: #ffece6;
+  --pl-on-orange: #ffffff;      /* what sits ON the brand fill */
+
+  /*
+   * Why the brand orange is not the working orange. #FF4E28 is the brand and
+   * it stays the brand — it draws the logo, the favicon and the focus ring,
+   * where nothing sits on top of it. But white text on it scores 3.30, and a
+   * button label is normal-size text, which needs 4.5. #C6350E is the same
+   * hue carried far enough to work in both directions.
+   *
+   * Dark mode inverts the trick: there the fill goes BRIGHTER (#ff5f36) and
+   * the label on it goes near-black, because a dark surface needs the fill to
+   * be the light thing. Same brand, same rule, opposite direction.
+   */
+
+  /* ── Money. These two carry the whole product's meaning. ───────────────── */
+  --pl-green: #1f7b53;          /* gained — text (5.23 white / 4.67 recessed) */
+  --pl-green-solid: #30a46c;    /* gained — fills, bars, chart marks ONLY */
+  --pl-green-tint: #e6f6eb;
+  --pl-red: #ce2c31;            /* lost — text (5.21 white / 4.65 recessed) */
+  --pl-red-solid: #e5484d;      /* lost — fills, bars, chart marks ONLY */
+  --pl-red-tint: #ffefef;
+
+  /* ── Tag hues. Categories, kinds, sources. NEVER a number. ─────────────── */
+  --pl-blue: #2b5bc4;
+  --pl-blue-solid: #4b7bec;
+  --pl-blue-tint: #eaf0fe;
+  --pl-violet: #6550b9;
+  --pl-violet-solid: #8b5cf6;
+  --pl-violet-tint: #f3eefe;
+  --pl-amber: #6f4c00;
+  --pl-amber-solid: #ffc53d;
+  --pl-amber-tint: #fef6e0;
+  --pl-pink: #c2298a;
+  --pl-pink-solid: #e056a0;
+  --pl-pink-tint: #fdecf6;
+  --pl-teal: #007971;
+  --pl-teal-solid: #2aa7a1;
+  --pl-teal-tint: #e3f5f4;
+
+  /* ── Categorical chart slots. IDENTITY ONLY — never money. ───────────────
+        A category, a source, a platform, a cost component: things that are
+        different from each other, where the difference is the whole point and
+        no one of them is "more" than another.
+
+        TAG HUES ARE NOT THESE. The `-solid` values above were authored as a
+        tint carrying dark text, and they fail badly as chart fills — amber
+        lands at 1.58:1 on white, and teal and pink collapse into each other
+        (ΔE 1.1) for a red-green colour-blind reader. Reaching for `--pl-blue-
+        solid` in a chart is the mistake these five exist to prevent.
+
+        The values below were not chosen by eye. They were run through the six
+        checks — lightness band, chroma floor, colour-blind separation,
+        normal-vision separation, and contrast against the surface — and pass
+        all six in BOTH themes. Change one and re-run the validator; do not
+        eyeball a replacement.
+
+        Assigned in FIXED ORDER, never cycled. A sixth category folds into
+        "Other": a generated ninth hue is indistinguishable from an existing
+        one under colour-blind simulation, which is the whole reason the order
+        is the safety mechanism.
+
+        Declared literally, NOT as aliases of the tag hues. Slot 1 happens to
+        equal `--pl-blue` here, but `--pl-blue` is #7aa7ff in dark, and an
+        alias would silently follow it out of the validated band.
+
+        There is deliberately no `-text` twin: a slot is only ever a fill or a
+        stroke, and the word beside it takes `--pl-ink`. That is what stops
+        these leaking into body copy. ─────────────────────────────────────── */
+  --pl-cat-1: #2b5bc4;
+  --pl-cat-2: #c2298a;
+  --pl-cat-3: #a86a00;
+  --pl-cat-4: #6550b9;
+  --pl-cat-5: #0d9488;
+
+  /* ── Chart furniture, so no chart primitive ever names a surface token. ── */
+  --pl-chart-gain: var(--pl-green-solid);
+  --pl-chart-loss: var(--pl-red-solid);
+  --pl-chart-neutral: var(--pl-ink-3);
+  --pl-chart-track: var(--pl-recessed);   /* the unfilled part of any bar */
+  --pl-chart-baseline: var(--pl-ink-3);   /* the zero rule on a diverging bar */
+  --pl-chart-axis: var(--pl-ink-2);
+  /* A label sitting ON a saturated fill, where neither ink nor surface is safe
+     to assume. Retires the two hardcoded whites in the heatmaps. */
+  --pl-on-fill: #ffffff;
+  /* Opacity for the last good render while a refetch is in flight. */
+  --pl-chart-hold: .55;
+
+  /* ── Shape. Three radii. ───────────────────────────────────────────────── */
+  /* Still three, and still only three — the owner's reference design simply
+     sits further round than the 6/8 the CSS had drifted to. A card at 16 reads
+     as a soft surface; at 8 it read as a box with the corners knocked off.
+     `-sm` stays well below it on purpose: a 16px radius on a 32px-tall input
+     is most of the control, and the two steps have to stay tellable apart. */
+  --pl-r-sm: 10px;   /* controls, tags, inputs, small surfaces */
+  --pl-r-md: 16px;   /* cards */
+  --pl-r-full: 999px;/* buttons, pills, avatars */
+
+  /* ── Elevation. Overlays only — they genuinely float. ──────────────────── */
+  --pl-overlay-shadow:
+    0 1px 2px rgba(20, 23, 31, .04),
+    0 12px 28px -8px rgba(20, 23, 31, .12),
+    0 32px 64px -24px rgba(20, 23, 31, .16);
+
+  /* ── Brand wash. Hero surfaces ONLY. Never a whole page, never a card
+        that carries a table. ─────────────────────────────────────────────── */
+  --pl-hero-wash:
+    radial-gradient(120% 140% at 100% 0%, rgba(255, 78, 40, .07) 0%, rgba(255, 78, 40, 0) 55%),
+    radial-gradient(100% 120% at 0% 100%, rgba(43, 91, 196, .05) 0%, rgba(43, 91, 196, 0) 50%);
+
+  /* ── The brand BLOCK. One per screen, and today that is the dashboard
+        headline — the tint above marks a card, this replaces it.
+
+        THE OWNER PICKED THESE TWO HEXES AND THE DIRECTION, and they are the
+        one place in this file where brand identity was chosen over the
+        contrast floor. Recorded here rather than quietly, because the
+        numbers matter to anyone who edits the hero later:
+
+          white on #ff4f30 → 3.27:1     white on #ff7d46 → 2.54:1
+
+        Both clear 3:1 nowhere near reliably and neither reaches the 4.5:1 this
+        app holds everywhere else. In practice the figure is 56px and reads
+        fine; the 12–14px lines beside it are the ones paying for it. So on
+        this surface — and ONLY this one — the caption sizes are stepped up and
+        set in medium weight, which is the only lever left once the fill is
+        fixed. Do not "fix" it by fading the text to 80%: that makes it worse,
+        and it is the first thing everyone tries.
+
+        Dark is the same gradient with a near-black label (§5 — the brand fill
+        is the LIGHT thing on a dark page), and near-black on these two stops
+        scores 5.68 and 7.32, so dark mode is fully clean. ────────────────── */
+  --pl-hero-solid: linear-gradient(135deg, #ff4f30 0%, #ff7d46 100%);
+  --pl-on-hero: #ffffff;
+
+  /* ── Type ──────────────────────────────────────────────────────────────── */
+  --app-font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ── Motion. One vocabulary, so nothing in the app invents its own timing.
+        Durations are read by framer-motion through src/lib/motion.ts too. ── */
+  --pl-ease: cubic-bezier(.22, .61, .36, 1);
+  --pl-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --pl-dur-fast: 140ms;
+  --pl-dur: 220ms;
+  --pl-dur-slow: 420ms;
+
+  /* ── shadcn/Radix token layer. Same names the 58 ui/ primitives already
+       reference, re-pointed at the palette above. ────────────────────────── */
+  --background: var(--pl-bg);
+  --foreground: var(--pl-ink);
+  --border: var(--pl-hairline);
+  --input: var(--pl-hairline);
+  --ring: var(--pl-orange);
+
+  --card: var(--pl-surface);
+  --card-foreground: var(--pl-ink);
+  --card-border: transparent;
+
+  --popover: var(--pl-surface);
+  --popover-foreground: var(--pl-ink);
+  --popover-border: var(--pl-hairline);
+
+  --primary: var(--pl-orange-fill);
+  --primary-hover: var(--pl-orange-hover);
+  --primary-soft: var(--pl-orange-tint);
+  --primary-foreground: var(--pl-on-orange);
+
+  --secondary: var(--pl-recessed);
+  --secondary-foreground: var(--pl-ink);
+  --muted: var(--pl-recessed);
+  --muted-foreground: var(--pl-ink-2);
+  --accent: var(--pl-orange-tint);
+  --accent-foreground: var(--pl-orange-text);
+  --destructive: var(--pl-red);
+  --destructive-foreground: #ffffff;
+
+  --sidebar: var(--pl-bg);
+  --sidebar-foreground: var(--pl-ink);
+  --sidebar-border: transparent;
+  --sidebar-primary: var(--pl-orange-fill);
+  --sidebar-primary-foreground: var(--pl-on-orange);
+  --sidebar-accent: var(--pl-recessed);
+  --sidebar-accent-foreground: var(--pl-ink);
+  --sidebar-ring: var(--pl-orange);
+
+  /* Semantic money aliases used by the money pages. */
+  --profit: var(--pl-green);
+  --profit-bright: var(--pl-green-solid);
+  --profit-soft: var(--pl-green-tint);
+  --cost: var(--pl-amber);
+  --expense: var(--pl-red);
+  --expense-soft: var(--pl-red-tint);
+  --blue: var(--pl-blue);
+  --blue-soft: var(--pl-blue-tint);
+
+  /* The shadcn-facing aliases (`bg-chart-1` and friends) now point at the
+     validated categorical slots. They used to hold money colours — green, red,
+     the brand orange — which meant the one name a chart library reaches for by
+     default handed out colours that MEAN something. Nothing consumed them, so
+     re-pointing costs no migration and buys one system instead of two: money
+     wears the green and red tokens, identity wears the cat tokens. */
+  --chart-1: var(--pl-cat-1);
+  --chart-2: var(--pl-cat-2);
+  --chart-3: var(--pl-cat-3);
+  --chart-4: var(--pl-cat-4);
+  --chart-5: var(--pl-cat-5);
+  --chart-grid: var(--pl-hairline);
+
+  /* Interaction wash used by hover-elevate. */
+  --elevate-1: rgba(20, 23, 31, .035);
+  --elevate-2: rgba(20, 23, 31, .07);
+  --button-outline: rgba(20, 23, 31, .10);
+  --badge-outline: rgba(20, 23, 31, .05);
+
+  /* ── LEGACY ALIASES ────────────────────────────────────────────────────────
+     Names the not-yet-rebuilt pages still reference. Each one points at its
+     replacement above, so every screen picks up the palette — and therefore
+     dark mode — without being touched. */
+  --glass-bg: var(--pl-surface);
+  --glass-bg-flat: var(--pl-surface);
+  --glass-bg-tinted: var(--pl-recessed);
+  --glass-border: transparent;
+  --glass-inner-border: transparent;
+
+  --pl-white: var(--pl-surface);
+  --pl-black: var(--pl-ink);
+  --pl-grey: var(--pl-ink-2);
+  --pl-mid-grey: var(--pl-ink-3);
+  --pl-light-grey: var(--pl-hairline);
+  --pl-purple: var(--pl-violet);
+  --pl-yellow: var(--pl-amber);
+  --pl-turquoise: var(--pl-teal);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK
+
+   Not an inversion — a re-authoring. Every value below was picked to hold the
+   SAME contract as its light twin: text clears 4.5:1 on the tightest surface
+   it can land on (the recessed panel), fills clear 3:1, and money still reads
+   green-gained / red-lost with orange as the mark.
+
+   Two rules flip, deliberately:
+     · A recessed panel is LIGHTER than the card here, not darker. Going darker
+       would collide with the page and the well would disappear.
+     · The brand fill goes bright and its label goes near-black, because on a
+       dark surface the fill has to be the light thing to read as a button.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark {
+  color-scheme: dark;
+
+  --pl-bg: #0a0c11;
+  --pl-surface: #13161d;
+  --pl-recessed: #1c2029;
+  --pl-hairline: #272c37;
+  --pl-grid-line: #333a48;
+
+  /* Value separation alone is weak at this end of the ramp, so a card gets a
+     hairline and a whisper of shadow. This is the ONE place dark adds a line. */
+  --pl-surface-line: rgba(255, 255, 255, .055);
+  --pl-surface-shadow: 0 1px 2px rgba(0, 0, 0, .32);
+
+  --pl-ink: #e9ebf1;        /* 15.2 on card */
+  --pl-ink-2: #8b95a8;      /* 5.41 on the recessed panel */
+  --pl-ink-3: #838da0;      /* 4.88 on the recessed panel */
+
+  --pl-orange: #ff6a45;         /* the mark, lifted so it glows on near-black */
+  --pl-orange-fill: #ff5f36;    /* bright fill, dark label — 5.92 */
+  --pl-orange-hover: #ff7a55;
+  --pl-orange-text: #ff8c66;    /* orange as a word — 7.14 on recessed */
+  --pl-orange-tint: #2e1509;
+  --pl-on-orange: #17120f;
+
+  --pl-green: #35c88a;          /* gained — text, 7.59 on recessed */
+  --pl-green-solid: #2fbe80;    /* gained — fills, bars, chart marks */
+  --pl-green-tint: #0f2a1f;
+  --pl-red: #ff6369;            /* lost — text, 5.62 on recessed */
+  --pl-red-solid: #e5484d;      /* lost — fills, bars, chart marks */
+  --pl-red-tint: #2b1416;
+
+  --pl-blue: #7aa7ff;
+  --pl-blue-solid: #5b87f0;
+  --pl-blue-tint: #101c33;
+  --pl-violet: #b39bff;
+  --pl-violet-solid: #8b5cf6;
+  --pl-violet-tint: #1c1633;
+  --pl-amber: #f5c451;
+  --pl-amber-solid: #e0a92c;
+  --pl-amber-tint: #2b2007;
+  --pl-pink: #f78ac8;
+  --pl-pink-solid: #e056a0;
+  --pl-pink-tint: #2f0f24;
+  --pl-teal: #4fd2c9;
+  --pl-teal-solid: #2aa7a1;
+  --pl-teal-tint: #072a28;
+
+  /* Categorical slots, dark. Same five hues, re-stepped for the dark surface —
+     these clear all six checks against #13161d, including the 3:1 contrast the
+     light steps only reach with a labels-or-table relief. */
+  --pl-cat-1: #4b7bec;
+  --pl-cat-2: #d4479b;
+  --pl-cat-3: #c08420;
+  --pl-cat-4: #8b6fd4;
+  --pl-cat-5: #12a897;
+
+  /* On a saturated fill in dark, ink is the readable label, not white. */
+  --pl-on-fill: #17120f;
+
+  /* Overlays on near-black need depth, not tint. */
+  --pl-overlay-shadow:
+    0 1px 2px rgba(0, 0, 0, .5),
+    0 12px 28px -8px rgba(0, 0, 0, .62),
+    0 32px 64px -24px rgba(0, 0, 0, .7);
+
+  --pl-hero-wash:
+    radial-gradient(120% 140% at 100% 0%, rgba(255, 106, 69, .13) 0%, rgba(255, 106, 69, 0) 55%),
+    radial-gradient(100% 120% at 0% 100%, rgba(122, 167, 255, .09) 0%, rgba(122, 167, 255, 0) 50%);
+
+  /* The brand block keeps the owner's gradient EXACTLY as it is in light —
+     the two stops are already bright enough to be the light thing on a
+     near-black page, which is what DESIGN.md §5 asks of the brand fill. Only
+     the label flips, and that flip is what makes dark the accessible theme
+     here: #17120f scores 5.68 on #ff4f30 and 7.32 on #ff7d46, where white in
+     light manages 3.27 and 2.54. Same picture, legible small print. */
+  --pl-on-hero: #17120f;
+
+  --destructive-foreground: #17120f;
+
+  /* The wash that hover-elevate paints has to be light here, not dark. */
+  --elevate-1: rgba(255, 255, 255, .045);
+  --elevate-2: rgba(255, 255, 255, .085);
+  --button-outline: rgba(255, 255, 255, .12);
+  --badge-outline: rgba(255, 255, 255, .07);
+
+  --chart-grid: rgba(255, 255, 255, .07);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-border: var(--card-border);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover-border: var(--popover-border);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-border: var(--primary);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-border: var(--secondary);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted-border: var(--muted);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-border: var(--accent);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary-border: var(--sidebar-primary);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent-border: var(--sidebar-accent);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+
+  /* Three radii, and every rounded-* utility collapses onto them. */
+  --radius-xs: var(--pl-r-sm);
+  --radius-sm: var(--pl-r-sm);
+  --radius-md: var(--pl-r-sm);
+  --radius-lg: var(--pl-r-md);
+  --radius-xl: var(--pl-r-md);
+  --radius-2xl: var(--pl-r-md);
+  --radius-3xl: var(--pl-r-md);
+  --radius-4xl: var(--pl-r-md);
+
+  /* Small shadows are off — the page plane is flat, and where dark needs a
+     lift it comes from --pl-surface-shadow, not from a utility. Large ones
+     are kept for things that genuinely float. */
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: var(--pl-overlay-shadow);
+  --shadow-lg: var(--pl-overlay-shadow);
+  --shadow-xl: var(--pl-overlay-shadow);
+  --shadow-2xl: var(--pl-overlay-shadow);
+
+  /* 12 / 14 / 14 — the reading tier. There is no 13 and no 11: a one-pixel
+     step is invisible, so it is not a step, it is noise. `sm` and `base`
+     deliberately collapse onto the same value so nothing can drift between
+     them. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.875rem;
+
+  /* The larger utilities land on the scale too, so `text-2xl` cannot invent a
+     24 the system never agreed to. Above 17 there is exactly one size — 22 —
+     and above that only `.t-hero`. That is what makes the hero dominant: not
+     that it is large, but that nothing else is allowed near it. */
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.35;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 1.375rem;
+  --text-3xl--line-height: 1.25;
+
+  --spacing: 0.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--pl-hairline);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    background-color: var(--pl-bg);
+  }
+
+  body {
+    font-family: var(--app-font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    background-color: var(--pl-bg);
+    color: var(--pl-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-synthesis: none;
+    letter-spacing: -0.01em;
+  }
+
+  /* Money columns only align if tabular figures are actually on. */
+  .tabular,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One focus ring for the whole app, drawn in the brand mark. */
+  :focus-visible {
+    outline: 2px solid var(--pl-orange);
+    outline-offset: 2px;
+  }
+
+  /* Somebody who has asked their machine for less movement gets less
+     movement — everywhere, including anything that ships its own animation.
+     framer-motion is told separately, in src/lib/motion.ts. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* ── Type scale. FIVE steps: 12 · 14 · 17 · 22 · 56 ─────────────────────
+        The gap between steps GROWS as the type grows, and that is the whole
+        idea:
+
+          12 → 14   ×1.17   you read these; a big jump would shout
+          14 → 17   ×1.21
+          17 → 22   ×1.29
+          22 → 56   ×2.55   you do not read this, you look at it
+
+        At reading sizes the eye cannot see a small ratio, so a 13 next to a
+        14 buys nothing and costs the system its spine — that is why the old
+        12/13/14/15 collapsed to 12/14. At display size the opposite holds:
+        only a large ratio makes one thing dominant, so the hero takes a leap
+        no other element is allowed to approach. A single ratio applied end to
+        end (1.618 everywhere) cannot do both jobs — from a 14px body it puts
+        the next step down at 8.6px, unreadable, and the golden ratio only
+        earns its keep at the top of the scale, where it is doing the same
+        job it does on a poster.
+
+        Nothing here is a "seven steps named for the job" list any more: five
+        sizes, and the job is in the class name. ─────────────────────────── */
+
+  /* The one big number on a screen. If two things use this, neither is big. */
+  .t-hero {
+    font-size: 3.5rem;
+    line-height: 1.02;
+    letter-spacing: -0.038em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The plain-English sentence that says what the number means. */
+  .t-verdict {
+    font-size: 1.375rem;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    font-weight: 400;
+  }
+
+  .t-title {
+    font-size: 1.375rem;
+    line-height: 1.25;
+    letter-spacing: -0.018em;
+    font-weight: 600;
+  }
+
+  .t-section {
+    font-size: 1.0625rem;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    font-weight: 600;
+  }
+
+  .t-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Supporting text is the SAME size as body and separates by colour. A 13
+     beside a 14 was never read as a level; grey beside ink always is. */
+  .t-secondary {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--pl-ink-2);
+  }
+
+  .t-micro {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+    color: var(--pl-ink-2);
+  }
+
+  /* Any figure. Monospace so digits are fixed-width, tabular as a belt on
+     top of that, and it aligns in a column without synthesised weight. */
+  .t-num {
+    font-family: var(--app-font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Layout ────────────────────────────────────────────────────────────── */
+  .app-page-shell {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 1440px;
+    padding: 24px 24px 64px;
+  }
+
+  @media (max-width: 640px) {
+    .app-page-shell {
+      padding: 16px 16px 96px;
+    }
+  }
+
+  /* ── THE surface. Raised by value; in dark it also carries the tokenised
+        hairline and whisper of shadow, both of which are nothing in light.
+        `.pl-glass`, `.app-panel` and `.app-table-shell` are the names the
+        not-yet-rebuilt pages use, kept pointing here. ────────────────────── */
+  .pl-surface,
+  .pl-glass,
+  .app-panel,
+  .app-table-shell {
+    position: relative;
+    border-radius: var(--pl-r-md);
+    border: none;
+    background: var(--pl-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--pl-surface-line),
+      var(--pl-surface-shadow);
+    color: var(--pl-ink);
+  }
+
+  .pl-surface-recessed {
+    border-radius: var(--pl-r-md);
+    border: none;
+    background: var(--pl-recessed);
+    box-shadow: inset 0 0 0 1px var(--pl-surface-line);
+  }
+
+  /* Hero surfaces only. The wash is the one decorative thing in the system. */
+  .pl-hero {
+    background-image: var(--pl-hero-wash);
+    background-repeat: no-repeat;
+  }
+
+  /* ── The brand block. ──────────────────────────────────────────────────
+        The strong form of `.pl-hero`: the card IS the brand colour rather
+        than carrying a hint of it. Still one per screen — two of these is a
+        page with no headline.
+
+        It cancels the surface line and shadow locally, the same way
+        `.pl-bordered` does, because a hairline drawn in the card colour over
+        a saturated fill reads as a printing error. Everything inside it takes
+        `--pl-on-hero`, which is why the class sets `color` rather than
+        leaving each child to remember. ──────────────────────────────────── */
+  .pl-hero-solid {
+    --pl-surface-line: transparent;
+    --pl-surface-shadow: 0 0 rgba(0, 0, 0, 0);
+    background-image: var(--pl-hero-solid);
+    background-repeat: no-repeat;
+    color: var(--pl-on-hero);
+  }
+
+  /* ── A dense grid panel. ────────────────────────────────────────────────
+        The hairline IS the separation here, so the value-lift line that dark
+        adds to every card is switched off locally — otherwise a bordered card
+        in dark wears TWO edges a pixel apart, one inset and one not, and the
+        doubling is exactly the kind of thing that reads as "unfinished"
+        without anyone being able to say why.
+
+        It cancels by setting the token, not by overriding the box-shadow, so
+        `.pl-surface` keeps one recipe and this stays a local answer to a local
+        question. Declared after `.pl-surface` so the border wins on source
+        order — same specificity, later rule. ─────────────────────────────── */
+  .pl-bordered {
+    --pl-surface-line: transparent;
+    border: 1px solid var(--pl-grid-line);
+  }
+
+  /* ── Charts. Recharts draws its own axis labels and tooltips with the
+        library's defaults (11px), which is below the floor and outside the
+        scale. Pulling them here fixes every chart at once, instead of a
+        fontSize prop argued over at each call site — the same reason the
+        radii and the type utilities are remapped rather than policed. ───── */
+  .recharts-wrapper text,
+  .recharts-default-tooltip,
+  .recharts-tooltip-wrapper {
+    font-size: 0.75rem;
+  }
+
+  /* ── Chart motion. There is NO entrance. A grow-in or draw-in starts from a
+        false picture (every bar at zero, half a line) and only reaches the
+        true one if frames keep coming — caught here with the pane unpainted,
+        every bar stuck at scaleX(0) reading "Rs 0". DESIGN.md §8: a chart
+        may not animate if it cannot be made to land. What moves is CHANGE:
+        when the period switches, bars glide from the old figure to the new
+        one, which happens under the owner's own click, on a painted page.
+        The reduced-motion damper above collapses that too. ───────────────── */
+  .pl-bar-x {
+    transition: width var(--pl-dur-slow) var(--pl-ease-out);
+  }
+  .pl-bar-y {
+    transition: height var(--pl-dur-slow) var(--pl-ease-out);
+  }
+  .pl-chart .recharts-active-dot circle {
+    transition: r var(--pl-dur-fast) ease;
+  }
+
+  .pl-chart-tooltip {
+    box-shadow: var(--pl-overlay-shadow);
+    border: 1px solid var(--pl-hairline);
+  }
+
+  /* ── Tables. One shell: recessed header, hairline rows, figures aligned. ─ */
+  .app-table {
+    width: 100%;
+    table-layout: auto;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+  }
+
+  .app-table thead tr {
+    background-color: var(--pl-recessed);
+  }
+
+  .app-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--pl-ink-2);
+    white-space: nowrap;
+  }
+
+  .app-table td {
+    padding: 8px 12px;
+    border-top: 1px solid var(--pl-hairline);
+    vertical-align: middle;
+  }
+
+  .app-table tbody tr:first-child td {
+    border-top: none;
+  }
+
+  .app-table tbody tr {
+    transition: background-color var(--pl-dur-fast) var(--pl-ease);
+  }
+
+  .app-table tbody tr:hover {
+    background-color: var(--elevate-1);
+  }
+
+  .app-table [data-num],
+  .app-table .num {
+    text-align: right;
+    font-family: var(--app-font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Scrollbars ────────────────────────────────────────────────────────── */
+  .app-scrollbar {
+    scrollbar-color: color-mix(in srgb, var(--pl-ink-3) 35%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: var(--pl-r-full);
+    background: color-mix(in srgb, var(--pl-ink-3) 28%, transparent);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--pl-ink-3) 45%, transparent);
+  }
+
+  /* Pages ask for a translucent card in a dozen different strengths. On a flat
+     plane there is only one card colour, so they all resolve to it. */
+  .bg-card\/40,
+  .bg-card\/50,
+  .bg-card\/60,
+  .bg-card\/70,
+  .bg-card\/80,
+  .bg-card\/90,
+  .bg-card\/95 {
+    background-color: var(--pl-surface);
+  }
+}
+
+@layer utilities {
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply hidden;
+  }
+
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--pl-ink-2);
+    pointer-events: none;
+  }
+
+  /* A pressable thing dips. 40ms, no bounce — it is feedback, not a flourish. */
+  .pl-press {
+    transition: transform var(--pl-dur-fast) var(--pl-ease);
+  }
+
+  .pl-press:active {
+    transform: scale(0.975);
+  }
+
+  .no-default-hover-elevate {}
+  .no-default-active-elevate {}
+
+  .toggle-elevate::before,
+  .toggle-elevate-2::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .toggle-elevate.toggle-elevated::before {
+    background-color: var(--elevate-2);
+  }
+
+  .border.toggle-elevate::before {
+    inset: -1px;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate),
+  .hover-elevate-2:not(.no-default-hover-elevate),
+  .active-elevate-2:not(.no-default-active-elevate) {
+    position: relative;
+    z-index: 0;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after,
+  .hover-elevate-2:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: 999;
+    transition: background-color var(--pl-dur-fast) var(--pl-ease);
+  }
+
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-1);
+  }
+
+  .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-2);
+  }
+
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after {
+    inset: -1px;
+  }
+}

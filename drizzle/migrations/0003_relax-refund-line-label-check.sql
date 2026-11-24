@@ -1,0 +1,2 @@
+ALTER TABLE "transaction_lines" DROP CONSTRAINT "transaction_lines_label_check";--> statement-breakpoint
+ALTER TABLE "transaction_lines" ADD CONSTRAINT "transaction_lines_label_check" CHECK (revenue_item_id IS NOT NULL OR expense_item_id IS NOT NULL OR refunded_line_id IS NOT NULL OR label IS NOT NULL);

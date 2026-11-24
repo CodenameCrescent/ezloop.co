@@ -1,0 +1,2 @@
+ALTER TABLE "businesses" ADD COLUMN "business_type" text DEFAULT 'ecommerce' NOT NULL;--> statement-breakpoint
+ALTER TABLE "businesses" ADD COLUMN "feature_overrides" jsonb DEFAULT '{}'::jsonb NOT NULL;
